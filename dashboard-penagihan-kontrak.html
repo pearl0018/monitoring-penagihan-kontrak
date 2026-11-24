@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Penagihan Kontrak – UP2K PBD</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#12263A;--mut:#5C6B7A;--bg:#F1F4F7;--card:#fff;--line:#DCE3EA;--blue:#0B5C8E;--yel:#F5B700;--grn:#2E8B6A;--none:#D3DAE1}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-variant-numeric:tabular-nums}
+header{background:var(--ink);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:4px solid var(--yel)}
+h1{font-size:20px;margin:0;font-weight:700}
+header p{margin:2px 0 0;color:#B9C6D3}
+.sync{display:flex;align-items:center;gap:12px;color:#B9C6D3;font-size:13px}
+button,select,input{font:inherit;color:inherit}
+.btn{background:var(--yel);color:var(--ink);border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.pt:focus-visible,tr.r:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+main{max-width:1280px;margin:0 auto;padding:20px 24px 40px;display:grid;gap:16px}
+#err{background:#FFF3D6;border:1px solid var(--yel);border-radius:8px;padding:12px 16px}
+#err[hidden]{display:none}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.k b{display:block;font-size:28px;font-weight:700;line-height:1.1}
+.k span{color:var(--mut);font-size:13px}
+.k.hi{border-left:5px solid var(--yel)}
+.filters{display:flex;gap:10px;flex-wrap:wrap}
+.filters select,.filters input{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:180px}
+.two{display:grid;grid-template-columns:1fr 1.3fr;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
+.card h2{font-size:15px;margin:0 0 12px}
+.pt{display:block;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:6px;padding:8px;margin-bottom:4px;cursor:pointer}
+.pt:hover{background:var(--bg)}.pt.on{background:#E6F0F7;border-color:var(--blue)}
+.row1{display:flex;justify-content:space-between;gap:8px;font-weight:500}
+.row1 small,.sub{color:var(--mut);font-weight:400;font-size:12px}
+.bar{height:8px;background:var(--none);border-radius:4px;overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;background:var(--blue)}
+.bar i.f{background:var(--grn)}
+.dl{max-height:360px;overflow:auto;padding-right:6px}
+.d{display:grid;grid-template-columns:22px 1fr 56px;gap:8px;align-items:center;padding:3px 0;font-size:13px}
+.d .bar{margin:0;grid-column:2}
+.d .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{text-align:left;font-size:12px;color:var(--mut);font-weight:600;padding:8px;border-bottom:2px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.r{cursor:pointer}tr.r:hover td{background:#F7F9FB}
+.pg{display:flex;align-items:center;gap:8px;min-width:130px}.pg .bar{flex:1;margin:0}
+.g{display:grid;grid-template-columns:repeat(12,12px);gap:2px}
+.c{width:12px;height:12px;border-radius:2px;background:var(--none)}
+.c.s1{background:var(--yel)}.c.s2{background:var(--grn)}
+.det td{background:#F7F9FB}
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 16px;font-size:13px}
+.dg div{display:flex;gap:8px;align-items:center}
+.lg{display:flex;gap:14px;font-size:12px;color:var(--mut);margin-bottom:10px;flex-wrap:wrap}
+.lg span{display:flex;align-items:center;gap:5px}
+.empty{padding:24px;text-align:center;color:var(--mut)}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}main{padding:16px}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Monitoring Dokumen Penagihan Kontrak</h1><p>UP2K Papua Barat Daya</p></div>
+  <div class="sync"><span id="stamp">Memuat data…</span><button class="btn" id="rf">Muat ulang</button></div>
+</header>
+<main>
+  <div id="err" hidden></div>
+  <section class="kpis" id="kpis"></section>
+  <section class="filters">
+    <select id="fpt" aria-label="Filter perusahaan"></select>
+    <select id="fst" aria-label="Filter status"><option value="all">Semua status</option><option value="lengkap">Dokumen lengkap</option><option value="proses">Dalam proses</option></select>
+    <input id="fq" type="search" placeholder="Cari desa atau perusahaan" aria-label="Cari">
+  </section>
+  <section class="two">
+    <div class="card"><h2>Progres per perusahaan</h2><div id="pts"></div></div>
+    <div class="card"><h2>Dokumen yang paling banyak belum diserahkan</h2><div class="dl" id="docs"></div></div>
+  </section>
+  <section class="card">
+    <h2>Rincian per lokasi</h2>
+    <div class="lg"><span><i class="c s2"></i>Sudah diserahkan</span><span><i class="c s1"></i>Revisi / sebagian</span><span><i class="c"></i>Belum</span><span>Klik baris untuk melihat 24 dokumen</span></div>
+    <div class="tw"><table id="tb"></table></div>
+  </section>
+</main>
+<script>
+const SHEET_ID='11O0ckpaG3yEqqzxoxTFUIir1v2n_afR-jsGuFzJhe_s', GID='0', REFRESH_MS=60000;
+const URLS=[
+ `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=0&gid=${GID}`,
+ `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`];
+const DOCS=['Surat Permohonan Pemeriksaan Pekerjaan','Surat Permohonan Pembayaran','Kwitansi 3 Rangkap Bermeterai','Faktur Pajak (E-Faktur)','Surat Setoran Pajak (SSP)','Salinan PKP & NPWP','Kontrak Induk/Rinci & Addendum','Copy Jaminan Pelaksanaan','Polis Asuransi Pengiriman Material','Asli Jaminan Pemeliharaan','BAST.I (Serah Terima Pertama)','BAPP & Bobot Prestasi','Laporan Pemeriksaan Pekerjaan (LPP)','Berita Acara Pembayaran (BAP)','BA Pengukuran Tahanan Isolasi/Tanah','Laporan Harian Pelaksana & K3','Formulir IBPRPR, JSA & Working Permit','Dokumentasi Akhir Tiang Konstruksi','Garansi Jaminan Material Non MDU','SK Asal Usul Barang JTM/JTR/Gardu','Asli Administrasi TUG 09 & TUG 10','As-Built Drawing & KML/KMZ Tagging','Sertifikat Laik Operasi (SLO) Asli','Penilaian Kinerja Penyedia (Kepdir 271)'];
+const L='abcdefghijklmnopqrstuvwx';
+const S={items:[],docs:DOCS,pt:'',st:'all',q:'',open:new Set()};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pc=n=>n.toFixed(1).replace('.',',')+'%';
+
+function parseCSV(t){const r=[];let row=[],c='',q=false;
+ for(let i=0;i<t.length;i++){const ch=t[i];
+  if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+  else if(ch=='"')q=true;
+  else if(ch==','){row.push(c);c=''}
+  else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;row.push(c);r.push(row);row=[];c=''}
+  else c+=ch}
+ if(c||row.length){row.push(c);r.push(row)}return r}
+
+function state(s,d){const v=(s||'').trim().toLowerCase(),hasD=(d||'').trim()&&(d||'').trim()!='-';
+ if(v===''||v==='-')return hasD?2:0;
+ if(/belum|tidak|tdk|kurang|^x$|✗|✘|false|^0$|^no?$/.test(v))return 0;
+ if(/revisi|proses|sebagian|perbaikan/.test(v))return 1;
+ return 2}
+
+function build(rows){
+ const h=rows.findIndex(r=>/nama perusahaan/i.test(r[1]||''));
+ if(h<0)throw new Error('Baris header “Nama Perusahaan” tidak ditemukan di sheet.');
+ S.docs=DOCS.map((n,i)=>((rows[h][5+i*2]||'').replace(/^[a-x]\.\s*/i,'').trim())||n);
+ const items=[];
+ for(let i=h+2;i<rows.length;i++){const r=rows[i];
+  if(!/^\d+$/.test((r[0]||'').trim())||!(r[1]||'').trim())continue;
+  const docs=S.docs.map((_,k)=>({s:state(r[5+k*2],r[6+k*2]),d:(r[6+k*2]||'').trim()}));
+  const done=docs.filter(x=>x.s===2).length;
+  items.push({no:r[0].trim(),pt:r[1].trim(),desa:(r[2]||'').trim(),docs,done,pct:done/S.docs.length*100,last:(r[4]||'').trim(),full:(r[53]||'').trim(),cat:(r[54]||'').trim()})}
+ return items}
+
+function render(){
+ const all=S.items,n=S.docs.length;
+ const list=all.filter(x=>(!S.pt||x.pt===S.pt)&&(S.st==='all'||(S.st==='lengkap')===(x.pct>=100))&&(!S.q||(x.pt+' '+x.desa).toLowerCase().includes(S.q)));
+ const full=list.filter(x=>x.pct>=100).length,sum=list.reduce((a,x)=>a+x.pct,0),dd=list.reduce((a,x)=>a+x.done,0);
+ const nPT=new Set(list.map(x=>x.pt)).size;
+ $('kpis').innerHTML=[
+  [list.length,'Lokasi / mitra kerja',nPT+' perusahaan'],[full,'Dokumen lengkap (100%)',''],[list.length-full,'Dalam proses',''],
+  [pc(list.length?sum/list.length:0),'Rata-rata progres',''],[dd+' / '+list.length*n,'Dokumen terkumpul','']
+ ].map((k,i)=>`<div class="k${i===3?' hi':''}"><b>${esc(k[0])}</b><span>${esc(k[1])}${k[2]?' · '+esc(k[2]):''}</span></div>`).join('');
+ const g={};all.forEach(x=>{(g[x.pt]??={n:0,s:0,f:0});g[x.pt].n++;g[x.pt].s+=x.pct;if(x.pct>=100)g[x.pt].f++});
+ const names=Object.keys(g);
+ $('fpt').innerHTML='<option value="">Semua perusahaan</option>'+names.map(p=>`<option value="${esc(p)}"${p===S.pt?' selected':''}>${esc(p)}</option>`).join('');
+ $('pts').innerHTML=names.map(p=>{const a=g[p].s/g[p].n;return `<button class="pt${p===S.pt?' on':''}" data-pt="${esc(p)}"><div class="row1"><span>${esc(p)}</span><span>${pc(a)}</span></div><div class="sub">${g[p].n} lokasi · ${g[p].f} lengkap</div><div class="bar"><i class="${a>=100?'f':''}" style="width:${a}%"></i></div></button>`}).join('')||'<div class="empty">Belum ada data.</div>';
+ const dc=S.docs.map((nm,k)=>({k,nm,c:list.filter(x=>x.docs[k].s===2).length})).sort((a,b)=>a.c-b.c||a.k-b.k);
+ $('docs').innerHTML=dc.map(d=>{const p=list.length?d.c/list.length*100:0;return `<div class="d"><b>${L[d.k]}.</b><span class="n" title="${esc(d.nm)}">${esc(d.nm)}</span><span style="text-align:right">${d.c}/${list.length}</span><div class="bar"><i class="${p>=100?'f':''}" style="width:${p}%"></i></div></div>`}).join('');
+ let h='<thead><tr><th>Lokasi</th><th>Progres</th><th>Dokumen a–x</th><th>Terakhir diserahkan</th><th>Tgl lengkap</th></tr></thead><tbody>';
+ list.forEach(x=>{const o=S.open.has(x.no);
+  h+=`<tr class="r" tabindex="0" data-row="${esc(x.no)}" aria-expanded="${o}"><td><b>${esc(x.desa)}</b><div class="sub">${esc(x.pt)}</div></td><td><div class="pg"><div class="bar"><i class="${x.pct>=100?'f':''}" style="width:${x.pct}%"></i></div><span>${pc(x.pct)}</span></div></td><td><div class="g">${x.docs.map((d,k)=>`<i class="c s${d.s}" title="${L[k]}. ${esc(S.docs[k])}${d.d&&d.d!=='-'?' — '+esc(d.d):''}"></i>`).join('')}</div></td><td>${esc(x.last)||'–'}</td><td>${esc(x.full)||'–'}</td></tr>`;
+  if(o)h+=`<tr class="det"><td colspan="5"><div class="dg">${x.docs.map((d,k)=>`<div><i class="c s${d.s}"></i><span>${L[k]}. ${esc(S.docs[k])}${d.d&&d.d!=='-'?' <small class="sub">('+esc(d.d)+')</small>':''}</span></div>`).join('')}</div>${x.cat&&x.cat!=='-'?`<p><b>Catatan:</b> ${esc(x.cat)}</p>`:''}</td></tr>`});
+ $('tb').innerHTML=h+'</tbody>'+(list.length?'':'<caption class="empty">Tidak ada lokasi yang cocok dengan filter.</caption>');
+}
+
+function ok(){$('err').hidden=true;$('stamp').textContent='Diperbarui '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+' · otomatis tiap 1 menit';render()}
+function fail(msg){const e=$('err');e.hidden=false;
+ e.innerHTML='<b>Data belum bisa dimuat dari Google Sheets.</b> '+esc(msg||'Pastikan sheet dibagikan sebagai “Anyone with the link – Viewer”.')+' Sementara itu, unduh sheet sebagai CSV (File → Download → .csv) lalu muat di sini: <input type="file" id="fu" accept=".csv">';
+ $('fu').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S.items=build(parseCSV(r.result));ok();$('stamp').textContent='Data dari file CSV (tidak otomatis)'}catch(x){fail(x.message)}};r.readAsText(f)};
+ $('stamp').textContent='Gagal memuat'}
+
+async function load(){let msg='';
+ for(const u of URLS){try{
+   const r=await fetch(u+'&_='+Date.now(),{cache:'no-store'});
+   if(!r.ok)throw new Error('HTTP '+r.status);
+   const t=await r.text();
+   if(/^\s*<(!doctype|html)/i.test(t))throw new Error('Sheet belum dibagikan secara publik.');
+   S.items=build(parseCSV(t));ok();return}
+  catch(e){msg=e.message}}
+ if(!S.items.length)fail(msg);else $('stamp').textContent='Gagal memperbarui · menampilkan data sebelumnya'}
+
+$('rf').onclick=load;
+$('fpt').onchange=e=>{S.pt=e.target.value;render()};
+$('fst').onchange=e=>{S.st=e.target.value;render()};
+$('fq').oninput=e=>{S.q=e.target.value.trim().toLowerCase();render()};
+$('pts').onclick=e=>{const b=e.target.closest('[data-pt]');if(b){S.pt=S.pt===b.dataset.pt?'':b.dataset.pt;render()}};
+const tog=e=>{const r=e.target.closest('tr.r');if(!r)return;const k=r.dataset.row;S.open.has(k)?S.open.delete(k):S.open.add(k);render()};
+$('tb').onclick=tog;
+$('tb').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tog(e)}};
+load();setInterval(()=>{if(!document.hidden)load()},REFRESH_MS);
+</script>
+</body>
+</html>
